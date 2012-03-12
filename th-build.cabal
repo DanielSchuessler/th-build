@@ -26,10 +26,10 @@ author:              Daniel Schüssler
 
 -- An email address to which users can send suggestions, bug reports, and
 -- patches.
-maintainer:          anotheraddress@gmx.de
+maintainer:          daniels@community.haskell.org
 
 -- A copyright notice.
--- copyright:           
+copyright:          Daniel Schüssler 
 
 category:            Template Haskell
 
@@ -37,6 +37,12 @@ build-type:          Simple
 
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.8
+
+homepage: https://github.com/DanielSchuessler/th-build
+
+Source-Repository head
+    type: git
+    location: git@github.com:DanielSchuessler/th-build.git
 
 
 library
