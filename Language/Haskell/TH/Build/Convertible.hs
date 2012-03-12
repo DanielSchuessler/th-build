@@ -108,18 +108,18 @@ instance Convertible DecQ [ DecQ ] where convert = return
 a & b = convert a : b
 infixr 5 &
 
-preconvert :: Convertible a b => (b -> c) -> a -> c
-preconvert = (. convert) 
+preconvert1 :: Convertible a b => (b -> c) -> a -> c
+preconvert1 = (. convert) 
 
 preconvert2
   :: (Convertible a1 b, Convertible a b1) =>
      (b1 -> b -> c) -> a -> a1 -> c
-preconvert2 f = preconvert . preconvert f
+preconvert2 f = preconvert1 . preconvert1 f
 
 preconvert3
   :: (Convertible a1 b, Convertible a2 b1, Convertible a b2) =>
      (b2 -> b1 -> b -> c) -> a -> a2 -> a1 -> c
-preconvert3 f = preconvert2 . preconvert f
+preconvert3 f = preconvert2 . preconvert1 f
 
 preconvert4
   :: (Convertible a1 b,
@@ -127,5 +127,5 @@ preconvert4
       Convertible a3 b2,
       Convertible a b3) =>
      (b3 -> b2 -> b1 -> b -> c) -> a -> a3 -> a2 -> a1 -> c
-preconvert4 f = preconvert3 . preconvert f
+preconvert4 f = preconvert3 . preconvert1 f
 

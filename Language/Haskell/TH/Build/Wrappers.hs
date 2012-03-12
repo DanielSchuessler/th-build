@@ -32,10 +32,10 @@ appE' x y = expQ x `appE` expQ y
 
 
 tupE' :: Convertible a [ExpQ] => a -> ExpQ
-tupE' = preconvert tupE
+tupE' = preconvert1 tupE
 
 tupP' :: Convertible a [PatQ] => a -> PatQ
-tupP' = preconvert tupP
+tupP' = preconvert1 tupP
 
 
 
@@ -56,7 +56,7 @@ tySynInstD'
 tySynInstD' = preconvert3 tySynInstD
 
 listE' :: Convertible a [ExpQ] => a -> ExpQ
-listE' = preconvert listE
+listE' = preconvert1 listE
 
 instanceD'
   :: (Convertible a1 [DecQ],
