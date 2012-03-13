@@ -3,16 +3,11 @@
 module Language.Haskell.TH.Build.Extras where
 
 import Language.Haskell.TH.Build.Convertible
+import Language.Haskell.TH.Build.Convertible.Restr
 import Language.Haskell.TH.Build.Wrappers
 import Language.Haskell.TH
 import Control.Monad
 
--- | = 'lamE''
-(\->) :: (Convertible a [PatQ], Convertible a1 ExpQ) =>
-                        a -> a1 -> ExpQ
-(\->) = lamE' 
-
-infixr 0 \->
 
 getFieldE :: (Convertible a Name) => 
     a       -- ^ Ctor name
@@ -28,6 +23,63 @@ getFieldE ctor n i = do
 
 htuple' :: Convertible a TypeQ => Int -> a -> TypeQ
 htuple' n t = foldl appT (tupleT n) (replicate n (typeQ t))
+
+-- * Sugar
+
+
+-- | = 'lamE''
+(\->) :: (Convertible a [PatQ], Convertible a1 ExpQ) =>
+                        a -> a1 -> ExpQ
+(\->) = lamE' 
+
+infixr 1 \->
+
+class Arrows a b | a -> b, b -> a where
+    arrow :: a -> b -> b 
+
+instance Arrows Exp Pat where arrow = ViewP
+instance Arrows Type Type where arrow x y = AppT (AppT ArrowT x) y
+instance Arrows Kind Kind where arrow = ArrowK
+
+(-->) :: (Convertible qa (Q a), Convertible qb (Q b), Arrows a b) =>
+                        qa -> qb -> Q b
+(-->) = preconvert2 (liftM2 arrow) 
+
+infixr 1 -->
+
+class Sigs a b c | c -> a b, a -> b c where
+    signature :: a -> b -> c
+
+(.::) :: (Convertible qa (Q a'), Convertible qb (Q b'), Sigs a' b' c) => qa -> qb -> Q c
+(.::) = preconvert2 (liftM2 signature)
+
+infixl 1 .::
+
+instance Sigs Name Type Dec where signature = SigD
+instance Sigs Exp Type Exp where signature = SigE
+instance Sigs Pat Type Pat where signature = SigP
+instance Sigs Type Kind Type where signature = SigT
+
+
+-- withLocalNames :: ((String -> Q Name) -> Q b) -> Q b
+-- withLocalNames f = do
+--     ref <- runIO (newIORef M.empty)
+--     let mkLocalName s = do
+--         m <- runIO (readIORef ref)
+--         case M.lookup s m of
+--              Just n -> return n
+--              Nothing -> do
+--                  n <- newName s
+--                  runIO (writeIORef ref (M.insert s n m)) 
+--                  return n
+-- 
+--     f mkLocalName
+
+
+
+
+
+-- * Variants without usually-empty parameters
 
 -- | Value decl without a @where@-clause
 svalD
@@ -47,18 +99,6 @@ sclause
      patQs -> bodyQ -> ClauseQ
 sclause p e = clause' p e ()
 
-class Sigs a b c | c -> a b, a -> b c where
-    signature :: a -> b -> c
-
-(.::) :: (Convertible qa (Q a'), Convertible qb (Q b'), Sigs a' b' c) => qa -> qb -> Q c
-(.::) = preconvert2 (liftM2 signature)
-
-instance Sigs Name Type Dec where signature = SigD
-instance Sigs Exp Type Exp where signature = SigE
-instance Sigs Pat Type Pat where signature = SigP
-instance Sigs Type Kind Type where signature = SigT
-
-
 -- | @data@ decl with no context
 sdataD
   :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr],
@@ -72,19 +112,3 @@ snewtypeD
       Convertible conQ ConQ, Convertible names [Name]) =>
      name -> tyVarBndrs -> conQ -> names -> DecQ
 snewtypeD n vars con derivs = newtypeD' () n vars con derivs
-
--- withLocalNames :: ((String -> Q Name) -> Q b) -> Q b
--- withLocalNames f = do
---     ref <- runIO (newIORef M.empty)
---     let mkLocalName s = do
---         m <- runIO (readIORef ref)
---         case M.lookup s m of
---              Just n -> return n
---              Nothing -> do
---                  n <- newName s
---                  runIO (writeIORef ref (M.insert s n m)) 
---                  return n
--- 
---     f mkLocalName
-
-

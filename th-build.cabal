@@ -26,7 +26,7 @@ description:
    valD' \"foo\" (appE' 'not 'True) ()
   @
   .
-  Hint: Use @()@ for an empty list argument to an autoconverting function, since @[]@ will yield an ambiguous type error.
+  Hint: Use @()@ for an empty list argument to an autoconverting function, since @[]@ will yield an type ambiguity error.
 
 
 
@@ -62,10 +62,16 @@ Source-Repository head
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Language.Haskell.TH.Build, Language.Haskell.TH.Build.Extras, Language.Haskell.TH.Build.Convertible, Language.Haskell.TH.Build.Wrappers
+  exposed-modules:     
+    Language.Haskell.TH.Build
+ 
   
   -- Modules included in this library but not exported.
-  -- other-modules:       
+  other-modules: 
+    Language.Haskell.TH.Build.Extras,
+    Language.Haskell.TH.Build.Convertible,
+    Language.Haskell.TH.Build.Convertible.Restr,
+    Language.Haskell.TH.Build.Wrappers      
   
   -- Other library packages from which modules are imported.
   build-depends:      base >= 4 && < 6, template-haskell 

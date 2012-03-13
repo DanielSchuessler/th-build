@@ -52,7 +52,6 @@ instance Convertible Integer Lit where convert = integerL
 
 -- | 'conE' or 'varE', determined by capitalization.
 instance Convertible Name ExpQ where convert = ifUpperThenElse conE varE
--- | 'conE' or 'varE', determined by capitalization.
 instance Convertible String Name where convert = mkName
 instance Convertible Lit ExpQ where convert = litE 
 instance Convertible RangeQ ExpQ where convert = arithSeqE
@@ -145,24 +144,6 @@ infixr 5 &
 
 
 
--- * Type restrictions of 'convert'
-#define MAKE_CONVERT_TO(N,T) N :: Convertible a T => a -> T; N = convert
-
-MAKE_CONVERT_TO(expQ,ExpQ)
-MAKE_CONVERT_TO(expQs,[ ExpQ ])
-MAKE_CONVERT_TO(patQ,PatQ)
-MAKE_CONVERT_TO(patQs,[PatQ])
-MAKE_CONVERT_TO(typeQ,TypeQ)
-MAKE_CONVERT_TO(typeQs,[ TypeQ ])
-MAKE_CONVERT_TO(name,Name)
-MAKE_CONVERT_TO(tyVarBndr,TyVarBndr)
-MAKE_CONVERT_TO(conQ,ConQ)
-MAKE_CONVERT_TO(cxtQ,CxtQ)
-MAKE_CONVERT_TO(strictTypeQ,StrictTypeQ)
-MAKE_CONVERT_TO(strictTypeQs,[StrictTypeQ])
-MAKE_CONVERT_TO(decsQ,DecsQ)
-
-#undef MAKE_CONVERT_TO
 
 -- * Function transformers
 preconvert1 :: Convertible a b => (b -> c) -> a -> c
