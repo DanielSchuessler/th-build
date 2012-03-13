@@ -56,6 +56,7 @@ instance Convertible Name ExpQ where convert = ifUpperThenElse conE varE
 instance Convertible String Name where convert = mkName
 instance Convertible Lit ExpQ where convert = litE 
 instance Convertible RangeQ ExpQ where convert = arithSeqE
+-- | 'conE' or 'varE', determined by capitalization.
 TRANS(String,Name,ExpQ)
 TRANS(Integer,Lit,ExpQ)
 
@@ -65,6 +66,14 @@ MAP([ Lit ],[ ExpQ ])
 MAP([ Integer ],[ ExpQ ])
 MAP([ RangeQ ],[ ExpQ ])
 
+-- | A single 'conE' or 'varE', determined by capitalization.
+TRANS( String ,ExpQ,[ExpQ])
+-- | A single 'conE' or 'varE', determined by capitalization.
+TRANS( Name ,ExpQ,[ExpQ])
+TRANS( Lit ,ExpQ,[ExpQ])
+TRANS( Integer ,ExpQ,[ExpQ])
+TRANS( RangeQ ,ExpQ,[ExpQ])
+
 -- | 'conP' or 'varP', determined by capitalization.
 instance Convertible Name PatQ where convert = ifUpperThenElse (flip conP []) varP
 -- | 'conP' or 'varP', determined by capitalization.
@@ -73,7 +82,9 @@ TRANS(String,Name,PatQ)
 MAP([ Name ],[PatQ])
 MAP([ String ],[PatQ])
 SINGLETON(PatQ)
+-- | A single 'conP' or 'varP', determined by capitalization.
 TRANS(Name,PatQ,[PatQ])
+-- | A single 'conP' or 'varP', determined by capitalization.
 TRANS(String,PatQ,[PatQ])
 
 -- | 'conT' or 'varT', determined by capitalization.
@@ -84,17 +95,19 @@ TRANS(String,Name,TypeQ)
 MAP([ Name ],[TypeQ])
 MAP([ String ],[TypeQ])
 SINGLETON(TypeQ)
+-- | A single 'conT' or 'varT', determined by capitalization.
 TRANS(Name,TypeQ,[TypeQ])
+-- | A single 'conT' or 'varT', determined by capitalization.
 TRANS(String,TypeQ,[TypeQ])
 
-
+-- | 'PlainTV'
 instance Convertible Name TyVarBndr where convert = PlainTV
 TRANS(String,Name,TyVarBndr)
 
 SINGLETON(TyVarBndr)
 TRANS(Name,TyVarBndr,[TyVarBndr])
 
-
+-- | 'sequence'
 instance Convertible [PredQ] CxtQ where convert = sequence
 
 -- | Uses 'NotStrict'.
@@ -107,13 +120,14 @@ TRANS(TypeQ,StrictTypeQ,[StrictTypeQ])
 TRANS(Name,StrictTypeQ,[StrictTypeQ])
 TRANS(String,StrictTypeQ,[StrictTypeQ])
 
+-- | 'sequence'
 instance Convertible [ DecQ ] DecsQ where convert = sequence
 instance Convertible DecQ DecsQ where convert = fmap return
 instance Convertible [DecsQ] DecsQ where convert = fmap join . sequence
 
 SINGLETON(DecQ)
 
-
+-- | 'normalB'
 instance Convertible ExpQ BodyQ where convert = normalB 
 TRANS(Name,ExpQ,BodyQ)
 TRANS(String,ExpQ,BodyQ)

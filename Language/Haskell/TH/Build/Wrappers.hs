@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-{-# OPTIONS -Wall -fno-warn-missing-signatures #-}
+{-# OPTIONS -Wall #-}
 module Language.Haskell.TH.Build.Wrappers where
 import Language.Haskell.TH
 import Language.Haskell.TH.Lib

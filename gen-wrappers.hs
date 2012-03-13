@@ -14,7 +14,7 @@ import Data.Maybe
 main = do
     bro <- readProcess "ghc" [
                 "-e",":m Language.Haskell.TH.Lib Language.Haskell.TH",
-                "-e",":bro  Language.Haskell.TH.Lib"] ""
+                "-e",":bro Language.Haskell.TH.Lib"] ""
 
     putStrLn (process bro)
 
@@ -24,7 +24,7 @@ process bro =
          ParseOk mod -> 
             unlines ( 
                 "{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}" :
-                "{-# OPTIONS -Wall -fno-warn-missing-signatures #-}" :
+                "{-# OPTIONS -Wall #-}" :
                 "module Language.Haskell.TH.Build.Wrappers where" :
                 "import Language.Haskell.TH" :
                 "import Language.Haskell.TH.Lib" :
@@ -38,7 +38,7 @@ process bro =
          e -> error ("Failed to parse :bro output: " ++ show e)
 
 
-noSrcLoc = undefined
+noSrcLoc = error "evaluated noSrcLoc"
 
 processModule (Module _ _ _ _ _ _ decls) = concatMap processDecl decls 
 
@@ -100,7 +100,7 @@ toVar t =
     where
         go (TyList t') = go t' ++ "s" 
         go (TyCon n) = case prettyPrint n of
-                       c:cs -> toLower c : cs
+                        c:cs -> toLower c : cs
 
         go (TyApp (TyCon (UnQual (Ident "Q"))) t') = go t' ++ "Q" 
         go (TyTuple Boxed [TyCon (UnQual (Ident "Guard")),TyCon (UnQual (Ident "Exp"))]) 
@@ -111,7 +111,7 @@ toVar t =
             = "maybeExpQ"
         go (TyTuple Boxed [TyCon (UnQual (Ident "Name")),TyCon (UnQual (Ident "Exp"))])
             = "nameExpPair"
-        go t' = error ("wrapperType/toVar: don't know what to do with type "++show t')
+        go t' = error ("toVar: don't know what to do with type "++show t')
 
 
 
