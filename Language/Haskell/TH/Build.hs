@@ -1,4 +1,5 @@
 {-# OPTIONS -Wall #-}
+-- | Description: Reexport module
 module Language.Haskell.TH.Build( 
      module Language.Haskell.TH.Build.Convertible
     ,module Language.Haskell.TH.Build.Wrappers

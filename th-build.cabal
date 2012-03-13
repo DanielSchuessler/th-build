@@ -13,7 +13,22 @@ version:             0.1.0.0
 synopsis:            More convenient construction of TH ASTs
 
 -- A longer description of the package.
--- description:         
+description:
+  The main feature here is implicit conversion of arguments to AST constructors: Tired of writing things like
+  .
+  @
+   valD (varP (mkName \"foo\")) (normalB (appE (varE 'not) (conT 'True))) []  
+  @
+  .
+  ? With th-build:
+  .
+  @
+   valD' \"foo\" (appE' 'not 'True) ()
+  @
+  .
+  Hint: Use @()@ for an empty list argument to an autoconverting function, since @[]@ will yield an ambiguous type error.
+
+
 
 -- The license under which the package is released.
 license:             BSD3
