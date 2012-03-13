@@ -1,5 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
 {-# OPTIONS -Wall #-}
 module Language.Haskell.TH.Build.Convertible where
 
@@ -8,7 +7,7 @@ import Data.Char
 import Control.Monad
 
 isUpperName :: Name -> Bool
-isUpperName = isUpper . head . nameBase
+isUpperName = liftM2 (||) (==':') isUpper . head . nameBase
 
 ifUpperThenElse :: (Name -> t) -> (Name -> t) -> Name -> t
 ifUpperThenElse ku kl n = (if isUpperName n then ku else kl) n
@@ -16,108 +15,142 @@ ifUpperThenElse ku kl n = (if isUpperName n then ku else kl) n
 class Convertible a b where
     convert :: a -> b
 
-expQ :: Convertible a ExpQ => a -> ExpQ
-expQ = convert 
 
-expQs :: Convertible a [ ExpQ ] => a -> [ ExpQ ]
-expQs = convert 
+-- instance Convertible ExpQ ExpQ where convert = id
+-- instance Convertible [ ExpQ ] [ ExpQ ] where convert = id
+-- instance Convertible [ StrictTypeQ ] [ StrictTypeQ ] where convert = id
+-- instance Convertible DecsQ DecsQ where convert = id
+-- instance Convertible [ DecQ ] [ DecQ ] where convert = id
+-- instance Convertible [PatQ] [PatQ] where convert = id
+-- instance Convertible TypeQ TypeQ where convert = id
+-- instance Convertible [ TypeQ ] [TypeQ] where convert = id
+-- instance Convertible Name Name where convert = id
+-- instance Convertible TyVarBndr TyVarBndr where convert = id
+-- instance Convertible ConQ ConQ where convert = id
+-- instance Convertible CxtQ CxtQ where convert = id
+-- instance Convertible StrictTypeQ StrictTypeQ where convert = id
 
-patQ :: Convertible a PatQ => a -> PatQ
-patQ = convert
-patQs :: Convertible a [PatQ] => a -> [PatQ]
-patQs = convert
-typeQ :: Convertible a TypeQ => a -> TypeQ
-typeQ = convert
-typeQs :: Convertible a [ TypeQ ] => a -> [ TypeQ ]
-typeQs = convert
-name :: Convertible a Name => a -> Name
-name = convert
-tyVarBndr :: Convertible a TyVarBndr => a -> TyVarBndr
-tyVarBndr = convert
+#define TRANS(A,B,C) instance Convertible (A) (C) where convert = (convert :: (B) -> (C)) . (convert :: (A) -> (B))
+#define MAP(A,C) instance Convertible (A) (C) where convert = map convert
+#define SINGLETON(A) -- instance Convertible (A) [A] where convert = return
 
-conQ :: Convertible a ConQ => a -> ConQ
-conQ = convert
+instance Convertible a a where convert = id
+-- | Singleton
+instance Convertible a [a] where convert = return
+-- instance Convertible a b => Convertible a [b] where convert = return . convert 
+-- | Empty list
+instance Convertible () [a] where convert = const mzero
+-- | Empty list
+instance Convertible () (Q [a]) where convert = const (return mzero)
+-- | 'Nothing'
+instance Convertible () (Maybe a) where convert = const mzero
+-- | 'Nothing'
+instance Convertible () (Q (Maybe a)) where convert = const (return mzero)
 
-cxtQ :: Convertible a CxtQ => a -> CxtQ
-cxtQ = convert
+instance Convertible Integer Lit where convert = integerL 
 
-strictTypeQ :: Convertible a StrictTypeQ => a -> StrictTypeQ
-strictTypeQ = convert
 
-strictTypeQs :: Convertible a [StrictTypeQ] => a -> [StrictTypeQ]
-strictTypeQs = convert
-
-instance Convertible ExpQ ExpQ where convert = id
+-- | 'conE' or 'varE', determined by capitalization.
 instance Convertible Name ExpQ where convert = ifUpperThenElse conE varE
-instance Convertible String ExpQ where convert = expQ . name
-instance Convertible Lit ExpQ where convert = litE 
-instance Convertible Integer ExpQ where convert = litE . integerL 
-
-instance Convertible [ ExpQ ] [ ExpQ ] where convert = id
-instance Convertible [ Name ] [ ExpQ ] where convert = map expQ
-instance Convertible [ String ] [ ExpQ ] where convert = map expQ
-instance Convertible [ Lit ] [ ExpQ ] where convert = map expQ
-instance Convertible [ Integer ] [ ExpQ ] where convert = map expQ
-
-instance Convertible PatQ PatQ where convert = id
-instance Convertible Name PatQ where convert = ifUpperThenElse (flip conP []) varP
-instance Convertible String PatQ where convert = patQ . name
-
-instance Convertible [PatQ] [PatQ] where convert = id
-instance Convertible [ Name ] [PatQ] where convert = map convert
-instance Convertible [ String ] [PatQ] where convert = map convert
-instance Convertible PatQ [PatQ] where convert = return
-instance Convertible Name [PatQ] where convert = return . convert
-instance Convertible String [PatQ] where convert = return . convert
-
-instance Convertible TypeQ TypeQ where convert = id
-instance Convertible Name TypeQ where convert = ifUpperThenElse conT varT
-instance Convertible String TypeQ where convert = typeQ . name
-
-instance Convertible [ TypeQ ] [TypeQ] where convert = id
-instance Convertible [ Name ] [TypeQ] where convert = map convert
-instance Convertible [ String ] [TypeQ] where convert = map convert
-instance Convertible TypeQ [TypeQ] where convert = return
-instance Convertible Name [TypeQ] where convert = return . convert
-instance Convertible String [TypeQ] where convert = return . convert
-
-instance Convertible Name Name where convert = id
+-- | 'conE' or 'varE', determined by capitalization.
 instance Convertible String Name where convert = mkName
+instance Convertible Lit ExpQ where convert = litE 
+instance Convertible RangeQ ExpQ where convert = arithSeqE
+TRANS(String,Name,ExpQ)
+TRANS(Integer,Lit,ExpQ)
 
-instance Convertible TyVarBndr TyVarBndr where convert = id
+MAP([ Name ],[ ExpQ ])
+MAP([ String ],[ ExpQ ])
+MAP([ Lit ],[ ExpQ ])
+MAP([ Integer ],[ ExpQ ])
+MAP([ RangeQ ],[ ExpQ ])
+
+-- | 'conP' or 'varP', determined by capitalization.
+instance Convertible Name PatQ where convert = ifUpperThenElse (flip conP []) varP
+-- | 'conP' or 'varP', determined by capitalization.
+TRANS(String,Name,PatQ)
+
+MAP([ Name ],[PatQ])
+MAP([ String ],[PatQ])
+SINGLETON(PatQ)
+TRANS(Name,PatQ,[PatQ])
+TRANS(String,PatQ,[PatQ])
+
+-- | 'conT' or 'varT', determined by capitalization.
+instance Convertible Name TypeQ where convert = ifUpperThenElse conT varT
+-- | 'conT' or 'varT', determined by capitalization.
+TRANS(String,Name,TypeQ)
+
+MAP([ Name ],[TypeQ])
+MAP([ String ],[TypeQ])
+SINGLETON(TypeQ)
+TRANS(Name,TypeQ,[TypeQ])
+TRANS(String,TypeQ,[TypeQ])
+
+
 instance Convertible Name TyVarBndr where convert = PlainTV
-instance Convertible String TyVarBndr where convert = tyVarBndr . name
+TRANS(String,Name,TyVarBndr)
 
-instance Convertible ConQ ConQ where convert = id
+SINGLETON(TyVarBndr)
+TRANS(Name,TyVarBndr,[TyVarBndr])
 
-instance Convertible CxtQ CxtQ where convert = id
+
 instance Convertible [PredQ] CxtQ where convert = sequence
 
-instance Convertible StrictTypeQ StrictTypeQ where convert = id
 -- | Uses 'NotStrict'.
 instance Convertible TypeQ StrictTypeQ where convert = strictType notStrict
-instance Convertible Name StrictTypeQ where convert = strictTypeQ . typeQ
-instance Convertible String StrictTypeQ where convert = strictTypeQ . typeQ
+TRANS(Name,TypeQ,StrictTypeQ)
+TRANS(String,TypeQ,StrictTypeQ)
 
-instance Convertible [ StrictTypeQ ] [ StrictTypeQ ] where convert = id
-instance Convertible StrictTypeQ [StrictTypeQ] where convert = return
-instance Convertible TypeQ [StrictTypeQ] where convert = return . strictTypeQ
-instance Convertible Name [StrictTypeQ] where convert = return . strictTypeQ
-instance Convertible String [StrictTypeQ] where convert = return . strictTypeQ 
+SINGLETON(StrictTypeQ)
+TRANS(TypeQ,StrictTypeQ,[StrictTypeQ])
+TRANS(Name,StrictTypeQ,[StrictTypeQ])
+TRANS(String,StrictTypeQ,[StrictTypeQ])
 
-instance Convertible [ DecQ ] [ DecQ ] where convert = id
-instance Convertible DecQ [ DecQ ] where convert = return
+instance Convertible [ DecQ ] DecsQ where convert = sequence
+instance Convertible DecQ DecsQ where convert = fmap return
+instance Convertible [DecsQ] DecsQ where convert = fmap join . sequence
 
--- instance Convertible a b => Convertible a [b] where convert = return . convert 
-instance Convertible () [a] where convert = const mzero
-instance Convertible () (Q [a]) where convert = const (return mzero)
-instance Convertible () (Maybe a) where convert = const mzero
-instance Convertible () (Q (Maybe a)) where convert = const (return mzero)
+SINGLETON(DecQ)
+
+
+instance Convertible ExpQ BodyQ where convert = normalB 
+TRANS(Name,ExpQ,BodyQ)
+TRANS(String,ExpQ,BodyQ)
+TRANS(Lit,ExpQ,BodyQ)
+TRANS(Integer,ExpQ,BodyQ)
+TRANS(RangeQ,ExpQ,BodyQ)
+
+
+#undef MAP
+#undef TRANS
 
 (&) ::  Convertible a1 a => a1 -> [a] -> [a]
 a & b = convert a : b
 infixr 5 &
 
+
+
+-- * Type restrictions of 'convert'
+#define MAKE_CONVERT_TO(N,T) N :: Convertible a T => a -> T; N = convert
+
+MAKE_CONVERT_TO(expQ,ExpQ)
+MAKE_CONVERT_TO(expQs,[ ExpQ ])
+MAKE_CONVERT_TO(patQ,PatQ)
+MAKE_CONVERT_TO(patQs,[PatQ])
+MAKE_CONVERT_TO(typeQ,TypeQ)
+MAKE_CONVERT_TO(typeQs,[ TypeQ ])
+MAKE_CONVERT_TO(name,Name)
+MAKE_CONVERT_TO(tyVarBndr,TyVarBndr)
+MAKE_CONVERT_TO(conQ,ConQ)
+MAKE_CONVERT_TO(cxtQ,CxtQ)
+MAKE_CONVERT_TO(strictTypeQ,StrictTypeQ)
+MAKE_CONVERT_TO(strictTypeQs,[StrictTypeQ])
+MAKE_CONVERT_TO(decsQ,DecsQ)
+
+#undef MAKE_CONVERT_TO
+
+-- * Function transformers
 preconvert1 :: Convertible a b => (b -> c) -> a -> c
 preconvert1 = (. convert) 
 

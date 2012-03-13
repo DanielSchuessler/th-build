@@ -29,17 +29,23 @@ getFieldE ctor n i = do
 htuple' :: Convertible a TypeQ => Int -> a -> TypeQ
 htuple' n t = foldl appT (tupleT n) (replicate n (typeQ t))
 
--- | Value decl with no @where@-clause
+-- | Value decl without a @where@-clause
 svalD
   :: (Convertible patQ PatQ, Convertible bodyQ BodyQ) =>
      patQ -> bodyQ -> DecQ
 svalD p e = valD' p e ()
 
--- | @case@ match with no @where@-clause
+-- | @case@ match without a @where@-clause
 smatch
   :: (Convertible patQ PatQ, Convertible bodyQ BodyQ) =>
      patQ -> bodyQ -> MatchQ
 smatch p e = match' p e ()
+
+-- | 'Clause' without a @where@-clause
+sclause
+  :: (Convertible patQs [PatQ], Convertible bodyQ BodyQ) =>
+     patQs -> bodyQ -> ClauseQ
+sclause p e = clause' p e ()
 
 class Sigs a b c | c -> a b, a -> b c where
     signature :: a -> b -> c
@@ -66,3 +72,19 @@ snewtypeD
       Convertible conQ ConQ, Convertible names [Name]) =>
      name -> tyVarBndrs -> conQ -> names -> DecQ
 snewtypeD n vars con derivs = newtypeD' () n vars con derivs
+
+-- withLocalNames :: ((String -> Q Name) -> Q b) -> Q b
+-- withLocalNames f = do
+--     ref <- runIO (newIORef M.empty)
+--     let mkLocalName s = do
+--         m <- runIO (readIORef ref)
+--         case M.lookup s m of
+--              Just n -> return n
+--              Nothing -> do
+--                  n <- newName s
+--                  runIO (writeIORef ref (M.insert s n m)) 
+--                  return n
+-- 
+--     f mkLocalName
+
+
