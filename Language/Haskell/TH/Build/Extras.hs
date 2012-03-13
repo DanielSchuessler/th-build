@@ -1,12 +1,13 @@
-{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, MultiParamTypeClasses, FunctionalDependencies, NoMonomorphismRestriction, FlexibleContexts #-}
 {-# OPTIONS -Wall #-}
 module Language.Haskell.TH.Build.Extras where
 
 import Language.Haskell.TH.Build.Convertible
 import Language.Haskell.TH.Build.Wrappers
 import Language.Haskell.TH
+import Control.Monad
 
-
+-- | = 'lamE''
 (\->) :: (Convertible a [PatQ], Convertible a1 ExpQ) =>
                         a -> a1 -> ExpQ
 (\->) = lamE' 
@@ -28,11 +29,40 @@ getFieldE ctor n i = do
 htuple' :: Convertible a TypeQ => Int -> a -> TypeQ
 htuple' n t = foldl appT (tupleT n) (replicate n (typeQ t))
 
+-- | Value decl with no @where@-clause
 svalD
-  :: (Convertible a1 ExpQ, Convertible a PatQ) => a -> a1 -> DecQ
-svalD = preconvert2 (\p e -> valD p (normalB e) [])
+  :: (Convertible patQ PatQ, Convertible bodyQ BodyQ) =>
+     patQ -> bodyQ -> DecQ
+svalD p e = valD' p e ()
 
+-- | @case@ match with no @where@-clause
 smatch
-  :: (Convertible a1 ExpQ, Convertible a PatQ) => a -> a1 -> MatchQ
-smatch = preconvert2 (\p e -> match p (normalB e) [])
+  :: (Convertible patQ PatQ, Convertible bodyQ BodyQ) =>
+     patQ -> bodyQ -> MatchQ
+smatch p e = match' p e ()
 
+class Sigs a b c | c -> a b, a -> b c where
+    signature :: a -> b -> c
+
+(.::) :: (Convertible qa (Q a'), Convertible qb (Q b'), Sigs a' b' c) => qa -> qb -> Q c
+(.::) = preconvert2 (liftM2 signature)
+
+instance Sigs Name Type Dec where signature = SigD
+instance Sigs Exp Type Exp where signature = SigE
+instance Sigs Pat Type Pat where signature = SigP
+instance Sigs Type Kind Type where signature = SigT
+
+
+-- | @data@ decl with no context
+sdataD
+  :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr],
+      Convertible conQs [ConQ], Convertible names [Name]) =>
+     name -> tyVarBndrs -> conQs -> names -> DecQ
+sdataD n vars cons derivs = dataD' () n vars cons derivs
+
+-- | @newtype@ decl with no context
+snewtypeD
+  :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr],
+      Convertible conQ ConQ, Convertible names [Name]) =>
+     name -> tyVarBndrs -> conQ -> names -> DecQ
+snewtypeD n vars con derivs = newtypeD' () n vars con derivs
