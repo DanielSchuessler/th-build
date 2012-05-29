@@ -43,6 +43,7 @@ noSrcLoc = error "evaluated noSrcLoc"
 processModule (Module _ _ _ _ _ _ decls) = concatMap processDecl decls 
 
 
+processDecl :: Decl -> [String]
 processDecl (TypeSig _ [n] t)
     | arity t == 0 = []
     | otherwise = 
@@ -54,21 +55,27 @@ processDecl (TypeSig _ [n] t)
                             ,"stringE","tupleT","unboxedTupleT"
                             ,"inlineSpecNoPhase","inlineSpecPhase"] -> []
                 | otherwise ->
+                    mkWrapper t n'
 
-                let
-                    n'' = n' ++ "'"
-                in
-                    [ n'' ++ " :: " ++wrapperType t,
-                      n'' ++ " = preconvert"++show (arity t)++" "++n'
-                    ] 
             _ -> trace ("Ignoring operator "++show n) []
 
 processDecl (TypeSig _ _ _) = assert False undefined
 processDecl _ = []
 
+mkWrapper :: Type -> String -> [String]
+mkWrapper t n =
+    let
+        n' = n ++ "'"
+    in
+        [ "-- | Argument-converting wrapper for '"++n++"'." 
+        , n' ++ " :: " ++wrapperType t,
+          n' ++ " = preconvert"++show (arity t)++" "++n
+        ] 
+
 arity (TyFun a b) = 1 + arity b 
 arity _ = 0
     
+wrapperType :: Type -> String
 wrapperType t = "("++intercalate ", " (prettyPrint <$> cxt)++") => "++prettyPrint rhs
     where
         (cxt,rhs) = runToVar (go t)
