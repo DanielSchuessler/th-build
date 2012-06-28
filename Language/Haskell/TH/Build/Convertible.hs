@@ -99,6 +99,10 @@ TRANS(Name,TypeQ,[TypeQ])
 -- | A single 'conT' or 'varT', determined by capitalization.
 TRANS(String,TypeQ,[TypeQ])
 
+instance Convertible TyVarBndr TypeQ where
+  convert (PlainTV v) = varT v
+  convert (KindedTV v k) = sigT (varT v) k
+
 -- | 'PlainTV'
 instance Convertible Name TyVarBndr where convert = PlainTV
 TRANS(String,Name,TyVarBndr)
