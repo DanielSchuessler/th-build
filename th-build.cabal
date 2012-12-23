@@ -74,5 +74,5 @@ library
     Language.Haskell.TH.Build.Wrappers      
   
   -- Other library packages from which modules are imported.
-  build-depends:      base >= 4 && < 6, template-haskell 
+  build-depends:      base >= 4 && < 6, template-haskell == 2.8.0.0
   
