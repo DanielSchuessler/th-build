@@ -10,6 +10,9 @@ import Language.Haskell.TH.Build.Convertible
 -- | Argument-converting wrapper for 'appE'.
 appE' :: (Convertible expQ ExpQ, Convertible expQ' ExpQ) => expQ -> expQ' -> ExpQ
 appE' = preconvert2 appE
+-- | Argument-converting wrapper for 'appK'.
+appK' :: (Convertible kind Kind, Convertible kind' Kind) => kind -> kind' -> Kind
+appK' = preconvert2 appK
 -- | Argument-converting wrapper for 'appT'.
 appT' :: (Convertible typeQ TypeQ, Convertible typeQ' TypeQ) => typeQ -> typeQ' -> TypeQ
 appT' = preconvert2 appT
@@ -19,9 +22,6 @@ appsE' = preconvert1 appsE
 -- | Argument-converting wrapper for 'arithSeqE'.
 arithSeqE' :: (Convertible rangeQ RangeQ) => rangeQ -> ExpQ
 arithSeqE' = preconvert1 arithSeqE
--- | Argument-converting wrapper for 'arrowK'.
-arrowK' :: (Convertible kind Kind, Convertible kind' Kind) => kind -> kind' -> Kind
-arrowK' = preconvert2 arrowK
 -- | Argument-converting wrapper for 'asP'.
 asP' :: (Convertible name Name, Convertible patQ PatQ) => name -> patQ -> PatQ
 asP' = preconvert2 asP
@@ -49,6 +49,9 @@ compE' = preconvert1 compE
 -- | Argument-converting wrapper for 'conE'.
 conE' :: (Convertible name Name) => name -> ExpQ
 conE' = preconvert1 conE
+-- | Argument-converting wrapper for 'conK'.
+conK' :: (Convertible name Name) => name -> Kind
+conK' = preconvert1 conK
 -- | Argument-converting wrapper for 'conP'.
 conP' :: (Convertible name Name, Convertible patQs [PatQ]) => name -> patQs -> PatQ
 conP' = preconvert2 conP
@@ -142,9 +145,18 @@ infixC' = preconvert3 infixC
 -- | Argument-converting wrapper for 'infixE'.
 infixE' :: (Convertible maybeExpQ (Maybe ExpQ), Convertible expQ ExpQ, Convertible maybeExpQ' (Maybe ExpQ)) => maybeExpQ -> expQ -> maybeExpQ' -> ExpQ
 infixE' = preconvert3 infixE
+-- | Argument-converting wrapper for 'infixLD'.
+infixLD' :: (Convertible int Int, Convertible name Name) => int -> name -> DecQ
+infixLD' = preconvert2 infixLD
+-- | Argument-converting wrapper for 'infixND'.
+infixND' :: (Convertible int Int, Convertible name Name) => int -> name -> DecQ
+infixND' = preconvert2 infixND
 -- | Argument-converting wrapper for 'infixP'.
 infixP' :: (Convertible patQ PatQ, Convertible name Name, Convertible patQ' PatQ) => patQ -> name -> patQ' -> PatQ
 infixP' = preconvert3 infixP
+-- | Argument-converting wrapper for 'infixRD'.
+infixRD' :: (Convertible int Int, Convertible name Name) => int -> name -> DecQ
+infixRD' = preconvert2 infixRD
 -- | Argument-converting wrapper for 'instanceD'.
 instanceD' :: (Convertible cxtQ CxtQ, Convertible typeQ TypeQ, Convertible decQs [DecQ]) => cxtQ -> typeQ -> decQs -> DecQ
 instanceD' = preconvert3 instanceD
@@ -154,6 +166,9 @@ kindedTV' = preconvert2 kindedTV
 -- | Argument-converting wrapper for 'lam1E'.
 lam1E' :: (Convertible patQ PatQ, Convertible expQ ExpQ) => patQ -> expQ -> ExpQ
 lam1E' = preconvert2 lam1E
+-- | Argument-converting wrapper for 'lamCaseE'.
+lamCaseE' :: (Convertible matchQs [MatchQ]) => matchQs -> ExpQ
+lamCaseE' = preconvert1 lamCaseE
 -- | Argument-converting wrapper for 'lamE'.
 lamE' :: (Convertible patQs [PatQ], Convertible expQ ExpQ) => patQs -> expQ -> ExpQ
 lamE' = preconvert2 lamE
@@ -175,9 +190,15 @@ litE' = preconvert1 litE
 -- | Argument-converting wrapper for 'litP'.
 litP' :: (Convertible lit Lit) => lit -> PatQ
 litP' = preconvert1 litP
+-- | Argument-converting wrapper for 'litT'.
+litT' :: (Convertible tyLitQ TyLitQ) => tyLitQ -> TypeQ
+litT' = preconvert1 litT
 -- | Argument-converting wrapper for 'match'.
 match' :: (Convertible patQ PatQ, Convertible bodyQ BodyQ, Convertible decQs [DecQ]) => patQ -> bodyQ -> decQs -> MatchQ
 match' = preconvert3 match
+-- | Argument-converting wrapper for 'multiIfE'.
+multiIfE' :: (Convertible guardedExpQs [Q (Guard, Exp)]) => guardedExpQs -> ExpQ
+multiIfE' = preconvert1 multiIfE
 -- | Argument-converting wrapper for 'newtypeD'.
 newtypeD' :: (Convertible cxtQ CxtQ, Convertible name Name, Convertible tyVarBndrs [TyVarBndr], Convertible conQ ConQ, Convertible names [Name]) => cxtQ -> name -> tyVarBndrs -> conQ -> names -> DecQ
 newtypeD' = preconvert5 newtypeD
@@ -199,6 +220,9 @@ normalG' = preconvert1 normalG
 -- | Argument-converting wrapper for 'normalGE'.
 normalGE' :: (Convertible expQ ExpQ, Convertible expQ' ExpQ) => expQ -> expQ' -> Q (Guard, Exp)
 normalGE' = preconvert2 normalGE
+-- | Argument-converting wrapper for 'numTyLit'.
+numTyLit' :: (Convertible integer Integer) => integer -> TyLitQ
+numTyLit' = preconvert1 numTyLit
 -- | Argument-converting wrapper for 'parS'.
 parS' :: (Convertible stmtQss [[StmtQ]]) => stmtQss -> StmtQ
 parS' = preconvert1 parS
@@ -218,14 +242,26 @@ patGE' = preconvert2 patGE
 plainTV' :: (Convertible name Name) => name -> TyVarBndr
 plainTV' = preconvert1 plainTV
 -- | Argument-converting wrapper for 'pragInlD'.
-pragInlD' :: (Convertible name Name, Convertible inlineSpecQ InlineSpecQ) => name -> inlineSpecQ -> DecQ
-pragInlD' = preconvert2 pragInlD
+pragInlD' :: (Convertible name Name, Convertible inline Inline, Convertible ruleMatch RuleMatch, Convertible phases Phases) => name -> inline -> ruleMatch -> phases -> DecQ
+pragInlD' = preconvert4 pragInlD
+-- | Argument-converting wrapper for 'pragRuleD'.
+pragRuleD' :: (Convertible string String, Convertible ruleBndrQs [RuleBndrQ], Convertible expQ ExpQ, Convertible expQ' ExpQ, Convertible phases Phases) => string -> ruleBndrQs -> expQ -> expQ' -> phases -> DecQ
+pragRuleD' = preconvert5 pragRuleD
 -- | Argument-converting wrapper for 'pragSpecD'.
-pragSpecD' :: (Convertible name Name, Convertible typeQ TypeQ) => name -> typeQ -> DecQ
-pragSpecD' = preconvert2 pragSpecD
+pragSpecD' :: (Convertible name Name, Convertible typeQ TypeQ, Convertible phases Phases) => name -> typeQ -> phases -> DecQ
+pragSpecD' = preconvert3 pragSpecD
 -- | Argument-converting wrapper for 'pragSpecInlD'.
-pragSpecInlD' :: (Convertible name Name, Convertible typeQ TypeQ, Convertible inlineSpecQ InlineSpecQ) => name -> typeQ -> inlineSpecQ -> DecQ
-pragSpecInlD' = preconvert3 pragSpecInlD
+pragSpecInlD' :: (Convertible name Name, Convertible typeQ TypeQ, Convertible inline Inline, Convertible phases Phases) => name -> typeQ -> inline -> phases -> DecQ
+pragSpecInlD' = preconvert4 pragSpecInlD
+-- | Argument-converting wrapper for 'pragSpecInstD'.
+pragSpecInstD' :: (Convertible typeQ TypeQ) => typeQ -> DecQ
+pragSpecInstD' = preconvert1 pragSpecInstD
+-- | Argument-converting wrapper for 'promotedT'.
+promotedT' :: (Convertible name Name) => name -> TypeQ
+promotedT' = preconvert1 promotedT
+-- | Argument-converting wrapper for 'promotedTupleT'.
+promotedTupleT' :: (Convertible int Int) => int -> TypeQ
+promotedTupleT' = preconvert1 promotedTupleT
 -- | Argument-converting wrapper for 'recC'.
 recC' :: (Convertible name Name, Convertible varStrictTypeQs [VarStrictTypeQ]) => name -> varStrictTypeQs -> ConQ
 recC' = preconvert2 recC
@@ -238,6 +274,9 @@ recP' = preconvert2 recP
 -- | Argument-converting wrapper for 'recUpdE'.
 recUpdE' :: (Convertible expQ ExpQ, Convertible nameExpPairQs [Q (Name, Exp)]) => expQ -> nameExpPairQs -> ExpQ
 recUpdE' = preconvert2 recUpdE
+-- | Argument-converting wrapper for 'ruleVar'.
+ruleVar' :: (Convertible name Name) => name -> RuleBndrQ
+ruleVar' = preconvert1 ruleVar
 -- | Argument-converting wrapper for 'sectionL'.
 sectionL' :: (Convertible expQ ExpQ, Convertible expQ' ExpQ) => expQ -> expQ' -> ExpQ
 sectionL' = preconvert2 sectionL
@@ -256,6 +295,9 @@ sigP' = preconvert2 sigP
 -- | Argument-converting wrapper for 'sigT'.
 sigT' :: (Convertible typeQ TypeQ, Convertible kind Kind) => typeQ -> kind -> TypeQ
 sigT' = preconvert2 sigT
+-- | Argument-converting wrapper for 'strTyLit'.
+strTyLit' :: (Convertible string String) => string -> TyLitQ
+strTyLit' = preconvert1 strTyLit
 -- | Argument-converting wrapper for 'strictType'.
 strictType' :: (Convertible strictQ (Q Strict), Convertible typeQ TypeQ) => strictQ -> typeQ -> StrictTypeQ
 strictType' = preconvert2 strictType
@@ -268,12 +310,18 @@ tupE' = preconvert1 tupE
 -- | Argument-converting wrapper for 'tupP'.
 tupP' :: (Convertible patQs [PatQ]) => patQs -> PatQ
 tupP' = preconvert1 tupP
+-- | Argument-converting wrapper for 'tupleK'.
+tupleK' :: (Convertible int Int) => int -> Kind
+tupleK' = preconvert1 tupleK
 -- | Argument-converting wrapper for 'tySynD'.
 tySynD' :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr], Convertible typeQ TypeQ) => name -> tyVarBndrs -> typeQ -> DecQ
 tySynD' = preconvert3 tySynD
 -- | Argument-converting wrapper for 'tySynInstD'.
 tySynInstD' :: (Convertible name Name, Convertible typeQs [TypeQ], Convertible typeQ TypeQ) => name -> typeQs -> typeQ -> DecQ
 tySynInstD' = preconvert3 tySynInstD
+-- | Argument-converting wrapper for 'typedRuleVar'.
+typedRuleVar' :: (Convertible name Name, Convertible typeQ TypeQ) => name -> typeQ -> RuleBndrQ
+typedRuleVar' = preconvert2 typedRuleVar
 -- | Argument-converting wrapper for 'uInfixE'.
 uInfixE' :: (Convertible expQ ExpQ, Convertible expQ' ExpQ, Convertible expQ'' ExpQ) => expQ -> expQ' -> expQ'' -> ExpQ
 uInfixE' = preconvert3 uInfixE
@@ -292,6 +340,9 @@ valD' = preconvert3 valD
 -- | Argument-converting wrapper for 'varE'.
 varE' :: (Convertible name Name) => name -> ExpQ
 varE' = preconvert1 varE
+-- | Argument-converting wrapper for 'varK'.
+varK' :: (Convertible name Name) => name -> Kind
+varK' = preconvert1 varK
 -- | Argument-converting wrapper for 'varP'.
 varP' :: (Convertible name Name) => name -> PatQ
 varP' = preconvert1 varP
