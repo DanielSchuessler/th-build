@@ -39,7 +39,6 @@ class Arrows a b | a -> b, b -> a where
 
 instance Arrows Exp Pat where arrow = ViewP
 instance Arrows Type Type where arrow x y = AppT (AppT ArrowT x) y
-instance Arrows Kind Kind where arrow = ArrowK
 
 (-->) :: (Convertible qa (Q a), Convertible qb (Q b), Arrows a b) =>
                         qa -> qb -> Q b
