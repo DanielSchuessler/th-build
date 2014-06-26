@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 {-# OPTIONS -Wall #-}
 module Language.Haskell.TH.Build.Wrappers where
-import Language.Haskell.TH
+import Language.Haskell.TH hiding(Role)
 import Language.Haskell.TH.Lib
 import Language.Haskell.TH.Build.Convertible
 
@@ -43,6 +43,12 @@ classP' = preconvert2 classP
 -- | Argument-converting wrapper for 'clause'.
 clause' :: (Convertible patQs [PatQ], Convertible bodyQ BodyQ, Convertible decQs [DecQ]) => patQs -> bodyQ -> decQs -> ClauseQ
 clause' = preconvert3 clause
+-- | Argument-converting wrapper for 'closedTypeFamilyKindD'.
+closedTypeFamilyKindD' :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr], Convertible kind Kind, Convertible tySynEqnQs [TySynEqnQ]) => name -> tyVarBndrs -> kind -> tySynEqnQs -> DecQ
+closedTypeFamilyKindD' = preconvert4 closedTypeFamilyKindD
+-- | Argument-converting wrapper for 'closedTypeFamilyNoKindD'.
+closedTypeFamilyNoKindD' :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr], Convertible tySynEqnQs [TySynEqnQ]) => name -> tyVarBndrs -> tySynEqnQs -> DecQ
+closedTypeFamilyNoKindD' = preconvert3 closedTypeFamilyNoKindD
 -- | Argument-converting wrapper for 'compE'.
 compE' :: (Convertible stmtQs [StmtQ]) => stmtQs -> ExpQ
 compE' = preconvert1 compE
@@ -74,7 +80,7 @@ dataInstD' = preconvert5 dataInstD
 doE' :: (Convertible stmtQs [StmtQ]) => stmtQs -> ExpQ
 doE' = preconvert1 doE
 -- | Argument-converting wrapper for 'dyn'.
-dyn' :: (Convertible string String) => string -> Q Exp
+dyn' :: (Convertible string String) => string -> ExpQ
 dyn' = preconvert1 dyn
 -- | Argument-converting wrapper for 'equalP'.
 equalP' :: (Convertible typeQ TypeQ, Convertible typeQ' TypeQ) => typeQ -> typeQ' -> PredQ
@@ -130,9 +136,6 @@ funD' = preconvert2 funD
 -- | Argument-converting wrapper for 'funDep'.
 funDep' :: (Convertible names [Name], Convertible names' [Name]) => names -> names' -> FunDep
 funDep' = preconvert2 funDep
--- | Argument-converting wrapper for 'global'.
-global' :: (Convertible name Name) => name -> ExpQ
-global' = preconvert1 global
 -- | Argument-converting wrapper for 'guardedB'.
 guardedB' :: (Convertible guardedExpQs [Q (Guard, Exp)]) => guardedExpQs -> BodyQ
 guardedB' = preconvert1 guardedB
@@ -241,6 +244,9 @@ patGE' = preconvert2 patGE
 -- | Argument-converting wrapper for 'plainTV'.
 plainTV' :: (Convertible name Name) => name -> TyVarBndr
 plainTV' = preconvert1 plainTV
+-- | Argument-converting wrapper for 'pragAnnD'.
+pragAnnD' :: (Convertible annTarget AnnTarget, Convertible expQ ExpQ) => annTarget -> expQ -> DecQ
+pragAnnD' = preconvert2 pragAnnD
 -- | Argument-converting wrapper for 'pragInlD'.
 pragInlD' :: (Convertible name Name, Convertible inline Inline, Convertible ruleMatch RuleMatch, Convertible phases Phases) => name -> inline -> ruleMatch -> phases -> DecQ
 pragInlD' = preconvert4 pragInlD
@@ -274,6 +280,9 @@ recP' = preconvert2 recP
 -- | Argument-converting wrapper for 'recUpdE'.
 recUpdE' :: (Convertible expQ ExpQ, Convertible nameExpPairQs [Q (Name, Exp)]) => expQ -> nameExpPairQs -> ExpQ
 recUpdE' = preconvert2 recUpdE
+-- | Argument-converting wrapper for 'roleAnnotD'.
+roleAnnotD' :: (Convertible name Name, Convertible roles [Role]) => name -> roles -> DecQ
+roleAnnotD' = preconvert2 roleAnnotD
 -- | Argument-converting wrapper for 'ruleVar'.
 ruleVar' :: (Convertible name Name) => name -> RuleBndrQ
 ruleVar' = preconvert1 ruleVar
@@ -316,9 +325,12 @@ tupleK' = preconvert1 tupleK
 -- | Argument-converting wrapper for 'tySynD'.
 tySynD' :: (Convertible name Name, Convertible tyVarBndrs [TyVarBndr], Convertible typeQ TypeQ) => name -> tyVarBndrs -> typeQ -> DecQ
 tySynD' = preconvert3 tySynD
+-- | Argument-converting wrapper for 'tySynEqn'.
+tySynEqn' :: (Convertible typeQs [TypeQ], Convertible typeQ TypeQ) => typeQs -> typeQ -> TySynEqnQ
+tySynEqn' = preconvert2 tySynEqn
 -- | Argument-converting wrapper for 'tySynInstD'.
-tySynInstD' :: (Convertible name Name, Convertible typeQs [TypeQ], Convertible typeQ TypeQ) => name -> typeQs -> typeQ -> DecQ
-tySynInstD' = preconvert3 tySynInstD
+tySynInstD' :: (Convertible name Name, Convertible tySynEqnQ TySynEqnQ) => name -> tySynEqnQ -> DecQ
+tySynInstD' = preconvert2 tySynInstD
 -- | Argument-converting wrapper for 'typedRuleVar'.
 typedRuleVar' :: (Convertible name Name, Convertible typeQ TypeQ) => name -> typeQ -> RuleBndrQ
 typedRuleVar' = preconvert2 typedRuleVar

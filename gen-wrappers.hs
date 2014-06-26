@@ -13,7 +13,7 @@ import Data.Maybe
 
 main = do
     bro <- readProcess "ghc" [
-                "-e",":m Language.Haskell.TH.Lib Language.Haskell.TH",
+                "-dsuppress-module-prefixes",
                 "-e",":bro Language.Haskell.TH.Lib"] ""
 
     putStrLn (process bro)
@@ -26,7 +26,7 @@ process bro =
                 "{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}" :
                 "{-# OPTIONS -Wall #-}" :
                 "module Language.Haskell.TH.Build.Wrappers where" :
-                "import Language.Haskell.TH" :
+                "import Language.Haskell.TH hiding(Role)" :
                 "import Language.Haskell.TH.Lib" :
                 "import Language.Haskell.TH.Build.Convertible" :
                 "":
@@ -35,7 +35,11 @@ process bro =
                 processModule mod
                 )
             
-         e -> error ("Failed to parse :bro output: " ++ show e)
+         e@(ParseFailed srcLoc _) -> error (unlines (
+                                              zipWith (\l i -> show i ++"\t"++l) (lines bro) [1..]
+                                              ++
+                                              ["Failed to parse :bro output: " ++ show e]
+                                            ))
 
 
 noSrcLoc = error "evaluated noSrcLoc"
@@ -53,7 +57,10 @@ processDecl (TypeSig _ [n] t)
                 | "PrimL" `isSuffixOf` n' || 
                   n' `elem` ["stringL","integerL","rationalL","charL"
                             ,"stringE","tupleT","unboxedTupleT"
-                            ,"inlineSpecNoPhase","inlineSpecPhase"] -> []
+                            ,"inlineSpecNoPhase","inlineSpecPhase"
+                            -- Deprecated:
+                            ,"global"
+                            ] -> []
                 | otherwise ->
                     mkWrapper t n'
 
@@ -72,7 +79,7 @@ mkWrapper t n =
           n' ++ " = preconvert"++show (arity t)++" "++n
         ] 
 
-arity (TyFun a b) = 1 + arity b 
+arity (TyFun _ b) = 1 + arity b 
 arity _ = 0
     
 wrapperType :: Type -> String
